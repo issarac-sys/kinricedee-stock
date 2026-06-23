@@ -86,6 +86,19 @@
   .hidden{display:none!important}
   .hint{font-size:12px;color:var(--muted);margin-top:8px}
   .note{background:var(--amber-light);color:#9a6400;font-size:13px;padding:10px 12px;border-radius:9px}
+  /* manage products */
+  .mrow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .mcat{flex:1;font-weight:700;font-size:15px;border:1.5px solid var(--line);border-radius:9px;padding:9px 10px;font-family:inherit;color:var(--green-dark);background:var(--green-light)}
+  .mname{flex:1;font-size:14px;border:1.5px solid var(--line);border-radius:9px;padding:8px 10px;font-family:inherit}
+  .mgrow{flex:1} .msmall{width:120px;flex:none}
+  .xbtn{border:0;background:var(--red-light);color:var(--red);border-radius:8px;padding:8px 12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;flex:none}
+  .mprod{border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:10px;background:#fbfcfd}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--green-light);color:var(--green-dark);font-size:13px;font-weight:600;padding:4px 6px 4px 10px;border-radius:8px}
+  .chip b{cursor:pointer;background:#fff;color:var(--red);width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;line-height:1}
+  .addrow{display:flex;gap:8px;align-items:center;margin-top:6px}
+  .addrow input{font-family:inherit;font-size:14px;padding:9px 10px;border:1.5px solid var(--line);border-radius:9px}
+  .addbtn{border:0;background:var(--green-light);color:var(--green-dark);border-radius:9px;padding:9px 12px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;flex:none}
 </style>
 </head>
 <body>
@@ -227,6 +240,25 @@
         <p class="hint">วาง URL ที่ได้จากการ Deploy Apps Script (ดูในไฟล์ README)</p>
       </div>
     </section>
+
+    <!-- TAB: MANAGE (admin only) -->
+    <section id="tab-manage" class="hidden">
+      <div class="card">
+        <h2>จัดการรายการสินค้า</h2>
+        <div class="note">🔧 เพิ่ม/ลบ/แก้ หมวดหมู่ • สินค้า • น้ำหนัก ได้เอง — ข้อมูลบันทึกในเครื่องนี้</div>
+        <div style="height:12px"></div>
+        <label>เพิ่มหมวดหมู่ใหม่</label>
+        <div class="addrow">
+          <input id="newCatInput" placeholder="เช่น ข้าวกล้อง" class="mgrow">
+          <button class="addbtn" onclick="addCategory()">+ เพิ่มหมวด</button>
+        </div>
+      </div>
+      <div id="manageList"></div>
+      <div class="card">
+        <button class="btn btn-ghost" onclick="exportCatalogJSON()">⬇️ สำรองรายการสินค้า (ไฟล์)</button>
+        <button class="btn btn-danger" style="margin-top:10px" onclick="resetCatalog()">↺ คืนค่ารายการเริ่มต้น</button>
+      </div>
+    </section>
   </main>
 
   <nav>
@@ -250,6 +282,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
       ส่ง Sheet
     </button>
+    <button id="navManage" class="hidden" data-tab="manage" onclick="switchTab('manage')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.18.43.5.78.91 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      จัดการสินค้า
+    </button>
   </nav>
 </div>
 
@@ -268,7 +304,7 @@ const EMPLOYEES = [
 
 /* ================= แค็ตตาล็อกสินค้า (จากไฟล์ ข้อมูลสินค้า1.xlsx) =================
    หมวดหมู่ → ชื่อสินค้า(แบรนด์) → น้ำหนัก(กก.)  */
-const CATALOG = [
+const DEFAULT_CATALOG = [
   { cat:"ข้าวเหนียว", products:[
     { name:"ตรานกอินทรี",   sizes:[45,15,5,1] },
     { name:"ตราแพนด้าแดง",  sizes:[45,15,5,1] },
@@ -328,20 +364,35 @@ const CATALOG = [
   ]},
 ];
 
-/* สร้างตารางค้นหา id → ข้อมูลเต็ม (id = "ci-pi-size") */
-const PRODUCTS = {};
-const ALL_IDS = [];
-CATALOG.forEach((g,ci)=>g.products.forEach((p,pi)=>{
-  const sizes = (p.sizes && p.sizes.length) ? p.sizes : [null];
-  sizes.forEach(sz=>{
-    const id = ci+"-"+pi+"-"+(sz==null?"x":sz);
-    const unit = sz==null ? "หน่วย" : (sz>=40?"กระสอบ":"ถุง");
-    const sizeLabel = sz==null ? "" : sz+" กก.";
-    const name = sz==null ? p.name : p.name+" "+sz+" กก.";
-    PRODUCTS[id] = { id, ci, pi, cat:g.cat, product:p.name, size:sz, sizeLabel, unit, name };
-    ALL_IDS.push(id);
-  });
-}));
+/* ===== แค็ตตาล็อกที่แก้ไขได้เอง (เก็บใน localStorage ของเครื่องนี้) ===== */
+function loadCatalog(){
+  try{ const s=localStorage.getItem('kgrd_catalog'); if(s){ const c=JSON.parse(s); if(Array.isArray(c)&&c.length) return c; } }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_CATALOG));  // ครั้งแรกใช้ค่าเริ่มต้น (ยังไม่บันทึก)
+}
+function saveCatalog(){ localStorage.setItem('kgrd_catalog', JSON.stringify(CATALOG)); }
+let CATALOG = loadCatalog();
+
+/* id อิงชื่อ (cat¦product¦size) — เสถียรเมื่อเพิ่ม/ลบรายการอื่น */
+const SEP='␟';
+function leafId(cat,product,size){ return cat+SEP+product+SEP+(size==null?'x':size); }
+
+/* สร้างตารางค้นหา id → ข้อมูลเต็ม */
+let PRODUCTS={}, ALL_IDS=[];
+function rebuildIndex(){
+  PRODUCTS={}; ALL_IDS=[];
+  CATALOG.forEach((g,ci)=>g.products.forEach((p,pi)=>{
+    const sizes = (p.sizes && p.sizes.length) ? p.sizes : [null];
+    sizes.forEach(sz=>{
+      const id = leafId(g.cat,p.name,sz);
+      const unit = sz==null ? "หน่วย" : (sz>=40?"กระสอบ":"ถุง");
+      const sizeLabel = sz==null ? "" : sz+" กก.";
+      const name = sz==null ? p.name : p.name+" "+sz+" กก.";
+      PRODUCTS[id] = { id, ci, pi, cat:g.cat, product:p.name, size:sz, sizeLabel, unit, name };
+      ALL_IDS.push(id);
+    });
+  }));
+}
+rebuildIndex();
 
 /* ================= ที่เก็บข้อมูล ================= */
 const LS = { user:'kgrd_user', cfg:'kgrd_cfg', counts:'kgrd_counts', log:'kgrd_log' };
@@ -368,6 +419,7 @@ const LOG_ICONS = {
   'บันทึกนับ':{i:'✅',bg:'var(--green-light)'}, 'แก้ไขจำนวน':{i:'✏️',bg:'var(--amber-light)'},
   'ส่ง Sheet':{i:'📤',bg:'var(--green-light)'}, 'ดาวน์โหลด CSV':{i:'⬇️',bg:'var(--blue-light)'},
   'ตั้งค่า':{i:'⚙️',bg:'var(--amber-light)'}, 'ล้าง log':{i:'🗑️',bg:'var(--red-light)'},
+  'แก้สินค้า':{i:'🔧',bg:'var(--blue-light)'},
 };
 function logAction(action, detail){
   const logs = load(LS.log, []);
@@ -428,9 +480,9 @@ function startApp(){
   const roleTxt = state.user.role==='admin' ? 'ผู้ดูแลระบบ' : 'พนักงาน';
   $('whoText').innerHTML = `👤 ${state.user.name} <span class="role-badge">#${state.user.code} • ${roleTxt}</span>` + (state.user.branch? ` • ${state.user.branch}`:'');
 
-  // role-based UI: staff cannot delete
-  if(isAdmin()){ $('clearLogBtn').classList.remove('hidden'); $('logPermNote').classList.add('hidden'); }
-  else { $('clearLogBtn').classList.add('hidden'); $('logPermNote').classList.remove('hidden'); }
+  // role-based UI: staff cannot delete / manage products
+  if(isAdmin()){ $('clearLogBtn').classList.remove('hidden'); $('logPermNote').classList.add('hidden'); $('navManage').classList.remove('hidden'); }
+  else { $('clearLogBtn').classList.add('hidden'); $('logPermNote').classList.remove('hidden'); $('navManage').classList.add('hidden'); }
 
   state.date = todayStr();
   $('countDate').value = state.date;
@@ -440,8 +492,7 @@ function startApp(){
   $('cfgUrl').value = (load(LS.cfg,{}).url)||DEFAULT_SHEET_URL;
 
   // build category dropdown
-  const sc = $('selCat');
-  CATALOG.forEach((g,ci)=> sc.add(new Option(g.cat, ci)) );
+  rebuildCatDropdown();
 
   $('countDate').addEventListener('change', e=>{ state.date=e.target.value; syncRoundTime(); renderSaved(); updateSelHint(); });
   $('diffDate').addEventListener('change', renderDiff);
@@ -476,11 +527,11 @@ function onProd(){
   const p=CATALOG[ci].products[pi];
   const sizes=(p.sizes&&p.sizes.length)? p.sizes : [null];
   sizes.forEach(sz=>{
-    const id=ci+"-"+pi+"-"+(sz==null?"x":sz);
+    const id=leafId(CATALOG[ci].cat,p.name,sz);
     ss.add(new Option(sz==null?'(ไม่ระบุน้ำหนัก)':sz+' กก.', id));
   });
   ss.disabled=false;
-  if(sizes.length===1){ ss.value=ci+"-"+pi+"-"+(sizes[0]==null?"x":sizes[0]); onSize(); }
+  if(sizes.length===1){ ss.value=leafId(CATALOG[ci].cat,p.name,sizes[0]); onSize(); }
 }
 function onSize(){
   const id=$('selSize').value;
@@ -533,7 +584,7 @@ function buildGroupedList(rd, withEdit){
     g.products.forEach((p,pi)=>{
       const sizes=(p.sizes&&p.sizes.length)?p.sizes:[null];
       sizes.forEach(sz=>{
-        const id=ci+"-"+pi+"-"+(sz==null?"x":sz);
+        const id=leafId(g.cat,p.name,sz);
         const v=rd.items[id];
         if(v===undefined) return;
         const pr=PRODUCTS[id];
@@ -582,7 +633,7 @@ function renderSummary(){
     g.products.forEach((p,pi)=>{
       const sizes=(p.sizes&&p.sizes.length)?p.sizes:[null];
       sizes.forEach(sz=>{
-        const id=ci+"-"+pi+"-"+(sz==null?"x":sz);
+        const id=leafId(g.cat,p.name,sz);
         if(rd.items[id]!==undefined) return;
         rows+=`<div class="item"><div class="name">${p.name}${sz!=null?' '+sz+' กก.':''}</div><span class="pill pill-pending">รอนับ</span></div>`;
       });
@@ -603,7 +654,7 @@ function renderDiff(){
     g.products.forEach((p,pi)=>{
       const sizes=(p.sizes&&p.sizes.length)?p.sizes:[null];
       sizes.forEach(sz=>{
-        const id=ci+"-"+pi+"-"+(sz==null?"x":sz);
+        const id=leafId(g.cat,p.name,sz);
         const mm=M[id], ee=E[id];
         if(mm===undefined && ee===undefined) return;
         const m=mm?mm.qty:undefined, e=ee?ee.qty:undefined, hasM=m!==undefined, hasE=e!==undefined;
@@ -671,13 +722,107 @@ function exportCSV(){
 
 /* ================= NAV ================= */
 function switchTab(tab){
-  ['count','summary','diff','log','send'].forEach(t=>$('tab-'+t).classList.toggle('hidden', t!==tab));
+  if(tab==='manage' && !isAdmin()){ toast('🔒 เฉพาะผู้ดูแลระบบ','err'); return; }
+  ['count','summary','diff','log','send','manage'].forEach(t=>$('tab-'+t).classList.toggle('hidden', t!==tab));
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   if(tab==='summary') renderSummary();
   if(tab==='diff') renderDiff();
   if(tab==='log') renderLog();
   if(tab==='send') refreshSend();
+  if(tab==='manage') renderManage();
   window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ================= จัดการสินค้า (เฉพาะผู้ดูแล) ================= */
+function rebuildCatDropdown(){
+  const sc=$('selCat'); const cur=sc.value;
+  sc.innerHTML='<option value="">— เลือกหมวดหมู่ —</option>';
+  CATALOG.forEach((g,ci)=> sc.add(new Option(g.cat, ci)) );
+  // reset cascade
+  $('selProd').innerHTML='<option value="">— เลือกหมวดหมู่ก่อน —</option>'; $('selProd').disabled=true;
+  $('selSize').innerHTML='<option value="">— เลือกสินค้าก่อน —</option>'; $('selSize').disabled=true;
+  state.selectedSku=null; updateSelHint();
+}
+function afterCatalogChange(){
+  saveCatalog(); rebuildIndex(); rebuildCatDropdown(); renderManage(); renderSaved();
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderManage(){
+  if(!isAdmin()) return;
+  const box=$('manageList');
+  if(CATALOG.length===0){ box.innerHTML=`<div class="empty">ยังไม่มีหมวดหมู่ — เพิ่มด้านบน</div>`; return; }
+  let html='';
+  CATALOG.forEach((g,ci)=>{
+    let prods='';
+    g.products.forEach((p,pi)=>{
+      const sizes=(p.sizes&&p.sizes.length)?p.sizes:[];
+      let chips=sizes.map((sz,si)=>`<span class="chip">${sz} กก.<b onclick="delSize(${ci},${pi},${si})">×</b></span>`).join('');
+      if(sizes.length===0) chips=`<span class="muted small">ไม่มีน้ำหนัก (นับเป็นหน่วย)</span>`;
+      prods+=`<div class="mprod">
+        <div class="mrow">
+          <input class="mname" value="${esc(p.name)}" onchange="renameProduct(${ci},${pi},this.value)">
+          <button class="xbtn" onclick="delProduct(${ci},${pi})">ลบ</button>
+        </div>
+        <div class="chips">${chips}</div>
+        <div class="addrow">
+          <input type="number" inputmode="numeric" id="ns_${ci}_${pi}" placeholder="น้ำหนัก กก." class="msmall">
+          <button class="addbtn" onclick="addSize(${ci},${pi})">+ น้ำหนัก</button>
+        </div>
+      </div>`;
+    });
+    html+=`<div class="card">
+      <div class="mrow">
+        <input class="mcat" value="${esc(g.cat)}" onchange="renameCat(${ci},this.value)">
+        <button class="xbtn" onclick="delCat(${ci})">ลบหมวด</button>
+      </div>
+      ${prods||'<div class="empty" style="padding:14px">ยังไม่มีสินค้าในหมวดนี้</div>'}
+      <div class="addrow">
+        <input id="np_${ci}" placeholder="ชื่อสินค้าใหม่" class="mgrow">
+        <button class="addbtn" onclick="addProduct(${ci})">+ เพิ่มสินค้า</button>
+      </div>
+    </div>`;
+  });
+  box.innerHTML=html;
+}
+function addCategory(){
+  if(!isAdmin())return; const name=$('newCatInput').value.trim();
+  if(!name){ toast('ใส่ชื่อหมวดหมู่','err'); return; }
+  if(CATALOG.some(g=>g.cat===name)){ toast('มีหมวดนี้แล้ว','err'); return; }
+  CATALOG.push({cat:name, products:[]}); $('newCatInput').value='';
+  logAction('แก้สินค้า', 'เพิ่มหมวด '+name); afterCatalogChange(); toast('เพิ่มหมวดแล้ว','ok');
+}
+function renameCat(ci,name){ name=name.trim(); if(!name){renderManage();return;} CATALOG[ci].cat=name; logAction('แก้สินค้า','เปลี่ยนชื่อหมวด'); afterCatalogChange(); }
+function delCat(ci){ if(!confirm(`ลบหมวด "${CATALOG[ci].cat}" และสินค้าทั้งหมดในหมวด?`))return; const n=CATALOG[ci].cat; CATALOG.splice(ci,1); logAction('แก้สินค้า','ลบหมวด '+n); afterCatalogChange(); toast('ลบหมวดแล้ว','ok'); }
+function addProduct(ci){
+  const inp=$('np_'+ci), name=inp.value.trim();
+  if(!name){ toast('ใส่ชื่อสินค้า','err'); return; }
+  if(CATALOG[ci].products.some(p=>p.name===name)){ toast('มีสินค้านี้แล้ว','err'); return; }
+  CATALOG[ci].products.push({name, sizes:[45,15,5,1]});  // ค่าเริ่มต้นน้ำหนักมาตรฐาน
+  logAction('แก้สินค้า','เพิ่มสินค้า '+name); afterCatalogChange(); toast('เพิ่มสินค้าแล้ว (น้ำหนักเริ่มต้น 45/15/5/1 แก้ได้)','ok');
+}
+function renameProduct(ci,pi,name){ name=name.trim(); if(!name){renderManage();return;} CATALOG[ci].products[pi].name=name; logAction('แก้สินค้า','เปลี่ยนชื่อสินค้า'); afterCatalogChange(); }
+function delProduct(ci,pi){ const n=CATALOG[ci].products[pi].name; if(!confirm(`ลบสินค้า "${n}"?`))return; CATALOG[ci].products.splice(pi,1); logAction('แก้สินค้า','ลบสินค้า '+n); afterCatalogChange(); toast('ลบสินค้าแล้ว','ok'); }
+function addSize(ci,pi){
+  const inp=$('ns_'+ci+'_'+pi); const v=parseFloat(inp.value);
+  if(isNaN(v)||v<=0){ toast('ใส่น้ำหนักเป็นตัวเลข','err'); return; }
+  const p=CATALOG[ci].products[pi]; if(!p.sizes) p.sizes=[];
+  if(p.sizes.includes(v)){ toast('มีน้ำหนักนี้แล้ว','err'); return; }
+  p.sizes.push(v); p.sizes.sort((a,b)=>b-a); inp.value='';
+  logAction('แก้สินค้า',`เพิ่มน้ำหนัก ${v} (${p.name})`); afterCatalogChange();
+}
+function delSize(ci,pi,si){ const p=CATALOG[ci].products[pi]; p.sizes.splice(si,1); logAction('แก้สินค้า','ลบน้ำหนัก'); afterCatalogChange(); }
+function resetCatalog(){
+  if(!confirm('คืนค่ารายการสินค้าเป็นค่าเริ่มต้นทั้งหมด? (รายการที่แก้ไว้จะหาย)'))return;
+  localStorage.removeItem('kgrd_catalog'); CATALOG=loadCatalog();
+  logAction('แก้สินค้า','คืนค่าเริ่มต้น'); rebuildIndex(); rebuildCatDropdown(); renderManage(); renderSaved();
+  toast('คืนค่ารายการเริ่มต้นแล้ว','ok');
+}
+function exportCatalogJSON(){
+  const blob=new Blob([JSON.stringify(CATALOG,null,2)],{type:'application/json;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='catalog_kinricedee.json'; a.click();
+  toast('สำรองรายการสินค้าแล้ว','ok');
 }
 
 /* ================= TOAST ================= */
