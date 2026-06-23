@@ -685,16 +685,16 @@ function buildPayload(){
 function refreshSend(){
   const rd=getRound(state.date,state.round), n=Object.keys(rd.items).length;
   $('sendHead').textContent=`วันที่ ${state.date} • รอบ ${state.round} • พนักงาน ${state.user.name} (#${state.user.code})`;
-  $('sendSummary').innerHTML = n? `<div class="small">มี <b>${n}</b> รายการพร้อมส่ง (จากทั้งหมด ${ALL_IDS.length})</div>` : `<div class="empty">ยังไม่มีรายการในรอบนี้</div>`;
-  $('sendBtn').disabled = n===0;
+  $('sendSummary').innerHTML = n? `<div class="small">มี <b>${n}</b> รายการพร้อมส่ง (จากทั้งหมด ${ALL_IDS.length})</div>` : `<div class="note">⚠️ วันที่ ${state.date} • รอบ ${state.round} ยังไม่มีรายการที่นับไว้ใน<b>เครื่องนี้</b><br>• ข้อมูลการนับเก็บแยกในแต่ละเครื่อง/เบราว์เซอร์ — ถ้านับในคอม จะไม่ขึ้นในมือถือ<br>• ตรวจ <b>วันที่</b> และ <b>รอบ (เช้า/เย็น)</b> ให้ตรงกับตอนที่นับ</div>`;
+  $('sendBtn').disabled = false;  // ไม่ปิดปุ่มเงียบ ๆ อีกต่อไป — ถ้าว่างจะแจ้งเตือนตอนกดแทน
 }
 function saveCfg(){ const url=$('cfgUrl').value.trim(); save(LS.cfg,{url}); logAction('ตั้งค่า','บันทึก URL'); toast('บันทึกการตั้งค่าแล้ว','ok'); }
 async function sendToSheet(){
   const cfg=load(LS.cfg,{}); const url=cfg.url||DEFAULT_SHEET_URL;
   if(!url){ toast('ยังไม่ได้ตั้งค่า URL','err'); switchTab('send'); return; }
   const payload=buildPayload();
-  if(payload.items.length===0){ toast('ไม่มีรายการให้ส่ง','err'); return; }
-  $('sendBtn').disabled=true; $('sendStatus').textContent='กำลังส่ง...';
+  if(payload.items.length===0){ toast(`ยังไม่มีรายการในรอบนี้ (${state.date} ${state.round}) — ไปแท็บ "นับสินค้า" นับก่อน`,'err'); switchTab('send'); return; }
+  $('sendBtn').disabled=true; $('sendStatus').textContent='กำลังส่ง...'; toast('กำลังส่ง...','');
   try{
     await fetch(url,{ method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) });
     $('sendStatus').textContent=`✓ ส่งแล้ว ${payload.items.length} รายการ เมื่อ ${nowStamp()}`;
