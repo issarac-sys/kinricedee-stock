@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>นับสต็อก – กินไรซ์ดี โกดังข้าวสาร</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green:#1f8a4c; --green-dark:#166a3a; --green-light:#e7f5ec;
+    --amber:#e08a00; --amber-light:#fff4e0;
+    --red:#d23b3b; --red-light:#fde9e9; --blue:#2563c9; --blue-light:#e8f0fc;
+    --ink:#1d2630; --muted:#6b7785; --line:#e4e8ec; --bg:#f4f6f8;
+    --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:'Sarabun',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5}
+  .app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--bg);display:flex;flex-direction:column}
+  header{background:var(--green);color:#fff;padding:14px 16px;position:sticky;top:0;z-index:20;box-shadow:var(--shadow)}
+  header .title{font-weight:700;font-size:18px;display:flex;align-items:center;gap:8px}
+  header .who{font-size:12px;opacity:.95;display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+  header .who button{background:rgba(255,255,255,.18);color:#fff;border:0;padding:4px 10px;border-radius:7px;font-size:12px;font-family:inherit;cursor:pointer}
+  .role-badge{display:inline-block;background:rgba(255,255,255,.22);border-radius:6px;padding:1px 7px;font-size:11px;margin-left:6px}
+  main{flex:1;padding:14px 14px 92px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+  h2{font-size:16px;margin:0 0 12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bottom:6px}
+  .step-no{display:inline-flex;width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;align-items:center;justify-content:center;margin-right:6px;font-weight:700}
+  input,select{width:100%;font-family:inherit;font-size:16px;padding:12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+  input:focus,select:focus{outline:none;border-color:var(--green)}
+  select:disabled{background:#f4f5f7;color:#aab2bb}
+  select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236b7785' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 12px center;padding-right:42px}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:inherit;font-size:16px;font-weight:600;padding:14px;border:0;border-radius:11px;cursor:pointer;transition:.12s}
+  .btn-primary{background:var(--green);color:#fff}
+  .btn-primary:active{background:var(--green-dark)}
+  .btn-ghost{background:var(--green-light);color:var(--green-dark)}
+  .btn-danger{background:var(--red-light);color:var(--red)}
+  .btn:disabled{opacity:.5}
+  .stepper{display:flex;align-items:stretch;border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
+  .stepper button{width:54px;border:0;background:var(--green-light);color:var(--green-dark);font-size:26px;font-weight:700;cursor:pointer;font-family:inherit}
+  .stepper button:active{background:#d2ecdb}
+  .stepper input{border:0;border-radius:0;text-align:center;font-size:22px;font-weight:700;-moz-appearance:textfield}
+  .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none}
+  .selhint{font-size:13px;color:var(--green-dark);font-weight:600;margin-top:8px;min-height:18px}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px}
+  .pill-done{background:var(--green-light);color:var(--green-dark)}
+  .pill-pending{background:var(--amber-light);color:var(--amber)}
+  .seg{display:flex;background:var(--green-light);border-radius:11px;padding:4px;gap:4px}
+  .seg button{flex:1;border:0;background:transparent;font-family:inherit;font-size:15px;font-weight:600;color:var(--green-dark);padding:10px;border-radius:8px;cursor:pointer}
+  .seg button.active{background:var(--green);color:#fff;box-shadow:var(--shadow)}
+  .item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:0}
+  .item .name{font-weight:600;font-size:15px}
+  .item .meta{font-size:12px;color:var(--muted);margin-top:2px}
+  .item .qty{font-size:20px;font-weight:700;color:var(--green-dark);min-width:46px;text-align:right}
+  .cat-head{font-size:12px;font-weight:700;color:var(--muted);margin:14px 0 2px;padding-top:6px;border-top:2px solid var(--line)}
+  .cat-head:first-child{border-top:0;margin-top:0;padding-top:0}
+  .muted{color:var(--muted)} .small{font-size:13px} .center{text-align:center}
+  .empty{text-align:center;color:var(--muted);padding:28px 10px;font-size:14px}
+  .prog{height:10px;background:var(--line);border-radius:999px;overflow:hidden;margin:8px 0 6px}
+  .prog>div{height:100%;background:var(--green);border-radius:999px;transition:width .3s}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:9px 6px;text-align:center;border-bottom:1px solid var(--line)}
+  th{font-size:12px;color:var(--muted);font-weight:600}
+  td.name{text-align:left;font-weight:600}
+  tr.cat-row td{text-align:left;font-weight:700;font-size:12px;color:var(--green-dark);background:var(--green-light)}
+  .diff-pos{color:var(--green-dark);font-weight:700}
+  .diff-neg{color:var(--red);font-weight:700}
+  .diff-zero{color:var(--muted)}
+  .log-row{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .log-row:last-child{border-bottom:0}
+  .log-ic{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .log-act{font-weight:600} .log-meta{font-size:12px;color:var(--muted);margin-top:1px}
+  nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:0 auto;background:#fff;border-top:1px solid var(--line);display:flex;z-index:20}
+  nav button{flex:1;border:0;background:transparent;padding:8px 2px 7px;font-family:inherit;font-size:10.5px;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+  nav button.active{color:var(--green)}
+  nav svg{width:22px;height:22px}
+  #toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;font-weight:600;opacity:0;transition:.25s;z-index:50;pointer-events:none;max-width:90%;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast.ok{background:var(--green)} #toast.err{background:var(--red)}
+  .login-wrap{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:24px;max-width:420px;margin:0 auto}
+  .logo{width:74px;height:74px;border-radius:20px;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:38px;margin:0 auto 14px;box-shadow:var(--shadow)}
+  .hidden{display:none!important}
+  .hint{font-size:12px;color:var(--muted);margin-top:8px}
+  .note{background:var(--amber-light);color:#9a6400;font-size:13px;padding:10px 12px;border-radius:9px}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login" class="login-wrap">
+  <div class="logo">🌾</div>
+  <h1 style="text-align:center;font-size:22px;margin:0 0 4px">กินไรซ์ดี โกดังข้าวสาร</h1>
+  <p style="text-align:center;color:var(--muted);margin:0 0 22px">ระบบนับสต็อกสินค้า</p>
+  <div class="card">
+    <label>รหัสพนักงาน</label>
+    <input id="loginCode" placeholder="เช่น 1001" inputmode="numeric" autocomplete="off">
+    <div style="height:12px"></div>
+    <label>รหัสสาขา / ร้าน</label>
+    <input id="loginBranch" placeholder="เช่น สาขาตลาดสด" autocomplete="off">
+    <div style="height:16px"></div>
+    <button class="btn btn-primary" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <p class="hint center" id="loginHint">ใส่รหัสพนักงานเพื่อเข้าสู่ระบบ</p>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app" class="app hidden">
+  <header>
+    <div class="title">🌾 นับสต็อก – กินไรซ์ดี</div>
+    <div class="who">
+      <span id="whoText"></span>
+      <button onclick="logout()">ออกจากระบบ</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- TAB: COUNT -->
+    <section id="tab-count">
+      <div class="card">
+        <h2>รอบการนับ</h2>
+        <label>วันที่</label>
+        <input type="date" id="countDate">
+        <div style="height:12px"></div>
+        <label>เลือกรอบ</label>
+        <div class="seg" id="roundSeg">
+          <button data-round="เช้า" class="active" onclick="setRound('เช้า')">🌅 เช้า</button>
+          <button data-round="เย็น" onclick="setRound('เย็น')">🌆 เย็น</button>
+        </div>
+        <div style="height:12px"></div>
+        <label>เวลาเริ่มนับ</label>
+        <input type="time" id="roundTime">
+        <p class="hint">เวลาบันทึกแต่ละสินค้าจะถูกจับอัตโนมัติทีละตัว</p>
+      </div>
+
+      <div class="card">
+        <h2>นับสินค้า</h2>
+        <label><span class="step-no">1</span>หมวดหมู่</label>
+        <select id="selCat" onchange="onCat()"><option value="">— เลือกหมวดหมู่ —</option></select>
+        <div style="height:12px"></div>
+        <label><span class="step-no">2</span>ชื่อสินค้า</label>
+        <select id="selProd" disabled onchange="onProd()"><option value="">— เลือกหมวดหมู่ก่อน —</option></select>
+        <div style="height:12px"></div>
+        <label><span class="step-no">3</span>น้ำหนัก (กก.)</label>
+        <select id="selSize" disabled onchange="onSize()"><option value="">— เลือกสินค้าก่อน —</option></select>
+        <div class="selhint" id="selHint"></div>
+        <div style="height:12px"></div>
+        <label><span class="step-no">4</span>จำนวนที่นับได้</label>
+        <div class="stepper">
+          <button onclick="bump(-1)" aria-label="ลด">−</button>
+          <input type="number" id="qtyInput" value="0" min="0" inputmode="numeric">
+          <button onclick="bump(1)" aria-label="เพิ่ม">+</button>
+        </div>
+        <div style="height:14px"></div>
+        <button class="btn btn-primary" id="saveBtn" onclick="saveCount()">💾 บันทึกการนับ (จับเวลา)</button>
+      </div>
+
+      <div class="card">
+        <h2><span>นับแล้วในรอบนี้</span><span class="pill pill-done" id="savedCountPill">0 รายการ</span></h2>
+        <div id="savedList"></div>
+      </div>
+    </section>
+
+    <!-- TAB: SUMMARY -->
+    <section id="tab-summary" class="hidden">
+      <div class="card">
+        <h2>สรุปความคืบหน้า</h2>
+        <div class="small muted" id="sumHead"></div>
+        <div class="prog"><div id="progBar" style="width:0%"></div></div>
+        <div class="small"><b id="sumDone">0</b> / <span id="sumTotal">0</span> รายการ &nbsp;•&nbsp; <span id="sumPct">0%</span></div>
+      </div>
+      <div class="card">
+        <h2><span class="pill pill-done" id="donePill">นับแล้ว 0</span></h2>
+        <div id="doneList"></div>
+      </div>
+      <div class="card">
+        <h2><span class="pill pill-pending" id="pendPill">ยังไม่ได้นับ 0</span></h2>
+        <div id="pendingList"></div>
+      </div>
+    </section>
+
+    <!-- TAB: DIFF -->
+    <section id="tab-diff" class="hidden">
+      <div class="card">
+        <h2>ผลต่าง เช้า–เย็น</h2>
+        <label>เลือกวันที่</label>
+        <input type="date" id="diffDate">
+        <p class="hint">ผลต่าง = เย็น − เช้า (ติดลบ = ของออก/ลดลง) • แสดงเฉพาะรายการที่นับ</p>
+      </div>
+      <div class="card"><div id="diffTable"></div></div>
+    </section>
+
+    <!-- TAB: LOG -->
+    <section id="tab-log" class="hidden">
+      <div class="card">
+        <h2><span>บันทึกการกระทำ</span>
+          <button id="clearLogBtn" class="btn btn-danger" style="width:auto;padding:7px 12px;font-size:13px" onclick="clearLog()">ล้าง log</button>
+        </h2>
+        <div id="logPermNote" class="note hidden">🔒 พนักงานดูบันทึกได้อย่างเดียว — ไม่มีสิทธิ์ลบข้อมูล</div>
+        <div class="small muted" id="logHead"></div>
+        <div style="height:6px"></div>
+        <div id="logList"></div>
+      </div>
+    </section>
+
+    <!-- TAB: SEND -->
+    <section id="tab-send" class="hidden">
+      <div class="card">
+        <h2>ส่งเข้า Google Sheet</h2>
+        <div class="small muted" id="sendHead"></div>
+        <div style="height:10px"></div>
+        <div id="sendSummary"></div>
+        <div style="height:6px"></div>
+        <button class="btn btn-primary" id="sendBtn" onclick="sendToSheet()">📤 ส่งรอบนี้เข้า Google Sheet</button>
+        <button class="btn btn-ghost" style="margin-top:10px" onclick="exportCSV()">⬇️ ดาวน์โหลด CSV (สำรอง)</button>
+        <p class="hint" id="sendStatus"></p>
+      </div>
+      <div class="card">
+        <h2>ตั้งค่า</h2>
+        <label>Google Apps Script URL</label>
+        <input id="cfgUrl" placeholder="https://script.google.com/macros/s/..../exec">
+        <div style="height:10px"></div>
+        <button class="btn btn-ghost" onclick="saveCfg()">บันทึกการตั้งค่า</button>
+        <p class="hint">วาง URL ที่ได้จากการ Deploy Apps Script (ดูในไฟล์ README)</p>
+      </div>
+    </section>
+  </main>
+
+  <nav>
+    <button class="active" data-tab="count" onclick="switchTab('count')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      นับสินค้า
+    </button>
+    <button data-tab="summary" onclick="switchTab('summary')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="8"/><rect x="13" y="6" width="3" height="12"/></svg>
+      สรุป
+    </button>
+    <button data-tab="diff" onclick="switchTab('diff')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3l4 4-4 4"/><path d="M20 7H4"/><path d="M8 21l-4-4 4-4"/><path d="M4 17h16"/></svg>
+      ผลต่าง
+    </button>
+    <button data-tab="log" onclick="switchTab('log')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+      บันทึก
+    </button>
+    <button data-tab="send" onclick="switchTab('send')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      ส่ง Sheet
+    </button>
+  </nav>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ================= พนักงาน & สิทธิ์ =================
+   role: 'staff' = นับ/แก้ไข/ดูบันทึก (ลบไม่ได้)  |  'admin' = ทำได้ทุกอย่าง
+   *** แก้รหัส/ชื่อพนักงานจริงได้ที่นี่ *** */
+const EMPLOYEES = [
+  { code:"1001", name:"พนักงาน 1", role:"staff" },
+  { code:"1002", name:"พนักงาน 2", role:"staff" },
+  { code:"1003", name:"พนักงาน 3", role:"staff" },
+  { code:"9999", name:"ผู้ดูแลระบบ", role:"admin" },
+];
+
+/* ================= แค็ตตาล็อกสินค้า (จากไฟล์ ข้อมูลสินค้า1.xlsx) =================
+   หมวดหมู่ → ชื่อสินค้า(แบรนด์) → น้ำหนัก(กก.)  */
+const CATALOG = [
+  { cat:"ข้าวเหนียว", products:[
+    { name:"ตรานกอินทรี",   sizes:[45,15,5,1] },
+    { name:"ตราแพนด้าแดง",  sizes:[45,15,5,1] },
+    { name:"ตราแหวนเพชร",   sizes:[45,15,5,1] },
+    { name:"ตรานกนางนวล",   sizes:[45,15,5,1] },
+    { name:"ตราหงษ์พลูธนา", sizes:[45,15,5,1] },
+    { name:"ตรางูน้ำเงิน",   sizes:[45,15,5,1] },
+  ]},
+  { cat:"หอม เครือมด", products:[
+    { name:"ตรามดใบเตย (ขาว-น้ำเงิน)", sizes:[45,40,15,5,1] },
+    { name:"ตราแมวแดง (เหลือง)",       sizes:[45,15,5,1] },
+    { name:"ตราแมวเขียว (เขียว)",       sizes:[45,15,5,1] },
+    { name:"ตรามด (ขาว-แดง)",          sizes:[45,15,5,1] },
+    { name:"ตราแมวฟ้า (ขาว)",          sizes:[45,15,5,1] },
+  ]},
+  { cat:"หอมอื่น", products:[
+    { name:"ตราหมีไผ่ (ส้ม)",        sizes:[45,15,5,1] },
+    { name:"ตราแหวนเพชร",            sizes:[45,15,5,1] },
+    { name:"ตราน้ำเต้า ใหม่เขียว",    sizes:[45,40,15,5,1] },
+    { name:"ตราน้ำเต้า เก่าแดง",      sizes:[45,40,15,5,1] },
+    { name:"ตรามังกร ใหม่เหลือง",     sizes:[45,15,5,1] },
+    { name:"ตรามังกร เก่าน้ำตาล",     sizes:[45,15,5,1] },
+    { name:"ตราส้มโอ (เขียว)",        sizes:[45,40,15,5,1] },
+    { name:"ตราเอราวัณ",             sizes:[45,15,5,1] },
+    { name:"ตราไดโนเสาร์ (ใหม่)",     sizes:[45,15,5,1] },
+    { name:"ตราไดโนเสาร์ (เก่า)",     sizes:[45,15,5,1] },
+  ]},
+  { cat:"ข้าวหอมท่อน", products:[
+    { name:"ปลาย ตรามด",      sizes:[45,15,5,1] },
+    { name:"ปลาย ตราเอราวัณ", sizes:[45,15,5,1] },
+    { name:"ซาห่อ ตรามด",     sizes:[45,15,5,1] },
+  ]},
+  { cat:"ข้าวเหลืองอ่อน", products:[
+    { name:"ตรามด (ชมพู)",   sizes:[45,15,5,1] },
+    { name:"ตรามด (เหลือง)", sizes:[45,15,5,1] },
+    { name:"ตราส้มโอ",       sizes:[45,40,15,5,1] },
+  ]},
+  { cat:"ข้าวขาว/เสาไห้", products:[
+    { name:"ตรามดเขียว (เขียว)", sizes:[45,15,5,1] },
+    { name:"ตรามดเขียว (ส้ม)",   sizes:[45,15,5,1] },
+    { name:"ตรากุหลาบ",         sizes:[45,15,5,1] },
+  ]},
+  { cat:"ข้าวอื่นๆ/ข้าวสุขภาพ", products:[
+    { name:"ข้าวกข.43 (น้ำตาลต่ำ)",   sizes:[45,15,5,1] },
+    { name:"ข้าวนึ่ง (ข้าวน้องหมา)",   sizes:[45,15,5,1] },
+    { name:"ข้าวเปลือกไก่",           sizes:[45,15,5,1] },
+    { name:"กล้องเหลือง (ไดโนเสาร์)",  sizes:[45,15,5,1] },
+    { name:"กล้องเหลือง (ข้าวทิพย์)",  sizes:[45,15,5,1] },
+    { name:"กล้องแดง (ข้าวทิพย์)",     sizes:[45,15,5,1] },
+    { name:"ไรซ์เบอร์รี่ (กระสอบ)",    sizes:[45,15,5,1] },
+  ]},
+  { cat:"อื่นๆ", products:[
+    { name:"น้ำตาลทรายขาว", sizes:[] },
+    { name:"น้ำตาลทรายแดง", sizes:[] },
+    { name:"600 ml 12 ขวด", sizes:[] },
+    { name:"1500 ml 6 ขวด", sizes:[] },
+  ]},
+];
+
+/* สร้างตารางค้นหา id → ข้อมูลเต็ม (id = "ci-pi-size") */
+const PRODUCTS = {};
+const ALL_IDS = [];
+CATALOG.forEach((g,ci)=>g.products.forEach((p,pi)=>{
+  const sizes = (p.sizes && p.sizes.length) ? p.sizes : [null];
+  sizes.forEach(sz=>{
+    const id = ci+"-"+pi+"-"+(sz==null?"x":sz);
+    const unit = sz==null ? "หน่วย" : (sz>=40?"กระสอบ":"ถุง");
+    const sizeLabel = sz==null ? "" : sz+" กก.";
+    const name = sz==null ? p.name : p.name+" "+sz+" กก.";
+    PRODUCTS[id] = { id, ci, pi, cat:g.cat, product:p.name, size:sz, sizeLabel, unit, name };
+    ALL_IDS.push(id);
+  });
+}));
+
+/* ================= ที่เก็บข้อมูล ================= */
+const LS = { user:'kgrd_user', cfg:'kgrd_cfg', counts:'kgrd_counts', log:'kgrd_log' };
+// URL ปลายทาง Google Apps Script (เชื่อมกับชีต "นับสต็อก กินไรซ์ดี" แล้ว) — ค่าเริ่มต้น
+const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyhQFV5pl258Ozsd-9qCwR2P6aHN1JS4bNYEKod4cInOW7plV-I0NjSHVEFKK0kAd5uqA/exec';
+let state = { user:null, round:'เช้า', date:null, selectedSku:null };
+const $ = id => document.getElementById(id);
+
+function load(key, def){ try{ const v=localStorage.getItem(key); return v==null? def : (JSON.parse(v) ?? def) }catch(e){ return def } }
+function save(key, val){ localStorage.setItem(key, JSON.stringify(val)) }
+
+function todayStr(){ const d=new Date(),off=d.getTimezoneOffset(); return new Date(d.getTime()-off*60000).toISOString().slice(0,10); }
+function nowTime(){ return new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}); }
+function nowStamp(){ return new Date().toLocaleString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+function isAdmin(){ return state.user && state.user.role==='admin'; }
+
+function getCounts(){ return load(LS.counts, {}) }
+function getRound(date, round){ const c=getCounts(); return (c[date]&&c[date][round]) ? c[date][round] : { time:'', items:{} }; }
+function setRoundData(date, round, data){ const c=getCounts(); if(!c[date])c[date]={}; c[date][round]=data; save(LS.counts,c); }
+
+/* ================= LOG ================= */
+const LOG_ICONS = {
+  'เข้าสู่ระบบ':{i:'🔑',bg:'var(--blue-light)'}, 'ออกจากระบบ':{i:'🚪',bg:'var(--red-light)'},
+  'บันทึกนับ':{i:'✅',bg:'var(--green-light)'}, 'แก้ไขจำนวน':{i:'✏️',bg:'var(--amber-light)'},
+  'ส่ง Sheet':{i:'📤',bg:'var(--green-light)'}, 'ดาวน์โหลด CSV':{i:'⬇️',bg:'var(--blue-light)'},
+  'ตั้งค่า':{i:'⚙️',bg:'var(--amber-light)'}, 'ล้าง log':{i:'🗑️',bg:'var(--red-light)'},
+};
+function logAction(action, detail){
+  const logs = load(LS.log, []);
+  logs.push({ stamp: nowStamp(), date: state.date, round: state.round,
+              user:(state.user&&state.user.name)||'', code:(state.user&&state.user.code)||'',
+              action, detail: detail||'' });
+  if(logs.length>1500) logs.splice(0, logs.length-1500);
+  save(LS.log, logs);
+}
+function renderLog(){
+  const logs = load(LS.log, []);
+  $('logHead').textContent = `ทั้งหมด ${logs.length} รายการ (เรียงล่าสุดก่อน)`;
+  const box = $('logList');
+  if(logs.length===0){ box.innerHTML = `<div class="empty">ยังไม่มีบันทึกการกระทำ</div>`; return; }
+  box.innerHTML = logs.slice().reverse().map(l=>{
+    const ic = LOG_ICONS[l.action] || {i:'•',bg:'var(--bg)'};
+    const who = [l.user, l.code?`#${l.code}`:''].filter(Boolean).join(' ');
+    const ctx = [who, (l.date?`${l.date} ${l.round||''}`.trim():'')].filter(Boolean).join(' • ');
+    return `<div class="log-row">
+      <div class="log-ic" style="background:${ic.bg}">${ic.i}</div>
+      <div style="flex:1">
+        <div class="log-act">${l.action}${l.detail?` — <span class="muted" style="font-weight:400">${l.detail}</span>`:''}</div>
+        <div class="log-meta">${l.stamp}${ctx?` • ${ctx}`:''}</div>
+      </div></div>`;
+  }).join('');
+}
+function clearLog(){
+  if(!isAdmin()){ toast('🔒 พนักงานไม่มีสิทธิ์ลบข้อมูล','err'); return; }
+  if(!confirm('ล้างบันทึกการกระทำทั้งหมด?')) return;
+  save(LS.log, []);
+  logAction('ล้าง log','โดยผู้ดูแลระบบ');
+  renderLog();
+  toast('ล้าง log แล้ว','ok');
+}
+
+/* ================= LOGIN ================= */
+function doLogin(){
+  const code=$('loginCode').value.trim(), branch=$('loginBranch').value.trim();
+  if(!code){ toast('กรุณาใส่รหัสพนักงาน','err'); return; }
+  const emp = EMPLOYEES.find(e=>e.code===code);
+  if(!emp){ $('loginHint').textContent='❌ ไม่พบรหัสพนักงานนี้ในระบบ'; $('loginHint').style.color='var(--red)'; toast('รหัสพนักงานไม่ถูกต้อง','err'); return; }
+  state.user = { code:emp.code, name:emp.name, role:emp.role, branch, at: nowStamp() };
+  save(LS.user, state.user);
+  startApp();
+  logAction('เข้าสู่ระบบ', (emp.role==='admin'?'ผู้ดูแลระบบ':'พนักงาน') + (branch?` • สาขา ${branch}`:''));
+  renderLog();
+}
+function logout(){
+  logAction('ออกจากระบบ','');
+  localStorage.removeItem(LS.user);
+  location.reload();
+}
+
+/* ================= APP INIT ================= */
+function startApp(){
+  $('login').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  const roleTxt = state.user.role==='admin' ? 'ผู้ดูแลระบบ' : 'พนักงาน';
+  $('whoText').innerHTML = `👤 ${state.user.name} <span class="role-badge">#${state.user.code} • ${roleTxt}</span>` + (state.user.branch? ` • ${state.user.branch}`:'');
+
+  // role-based UI: staff cannot delete
+  if(isAdmin()){ $('clearLogBtn').classList.remove('hidden'); $('logPermNote').classList.add('hidden'); }
+  else { $('clearLogBtn').classList.add('hidden'); $('logPermNote').classList.remove('hidden'); }
+
+  state.date = todayStr();
+  $('countDate').value = state.date;
+  $('diffDate').value = state.date;
+  $('roundTime').value = nowTime();
+  if(!load(LS.cfg,{}).url) save(LS.cfg,{url:DEFAULT_SHEET_URL});  // ตั้งค่า URL อัตโนมัติครั้งแรก
+  $('cfgUrl').value = (load(LS.cfg,{}).url)||DEFAULT_SHEET_URL;
+
+  // build category dropdown
+  const sc = $('selCat');
+  CATALOG.forEach((g,ci)=> sc.add(new Option(g.cat, ci)) );
+
+  $('countDate').addEventListener('change', e=>{ state.date=e.target.value; syncRoundTime(); renderSaved(); updateSelHint(); });
+  $('diffDate').addEventListener('change', renderDiff);
+
+  syncRoundTime(); renderSaved();
+}
+
+function setRound(r){
+  state.round=r;
+  document.querySelectorAll('#roundSeg button').forEach(b=>b.classList.toggle('active', b.dataset.round===r));
+  syncRoundTime(); renderSaved(); updateSelHint();
+}
+function syncRoundTime(){ const rd=getRound(state.date,state.round); if(rd.time)$('roundTime').value=rd.time; }
+
+/* ================= เลือกสินค้าแบบ 3 ขั้น ================= */
+function onCat(){
+  const ci=$('selCat').value;
+  const sp=$('selProd'), ss=$('selSize');
+  sp.innerHTML='<option value="">— เลือกสินค้า —</option>';
+  ss.innerHTML='<option value="">— เลือกน้ำหนัก —</option>';
+  ss.disabled=true; state.selectedSku=null; updateSelHint(); $('qtyInput').value='0';
+  if(ci===''){ sp.disabled=true; sp.innerHTML='<option value="">— เลือกหมวดหมู่ก่อน —</option>'; return; }
+  CATALOG[ci].products.forEach((p,pi)=> sp.add(new Option(p.name, pi)) );
+  sp.disabled=false;
+}
+function onProd(){
+  const ci=$('selCat').value, pi=$('selProd').value;
+  const ss=$('selSize');
+  ss.innerHTML='<option value="">— เลือกน้ำหนัก —</option>';
+  state.selectedSku=null; updateSelHint(); $('qtyInput').value='0';
+  if(pi===''){ ss.disabled=true; return; }
+  const p=CATALOG[ci].products[pi];
+  const sizes=(p.sizes&&p.sizes.length)? p.sizes : [null];
+  sizes.forEach(sz=>{
+    const id=ci+"-"+pi+"-"+(sz==null?"x":sz);
+    ss.add(new Option(sz==null?'(ไม่ระบุน้ำหนัก)':sz+' กก.', id));
+  });
+  ss.disabled=false;
+  if(sizes.length===1){ ss.value=ci+"-"+pi+"-"+(sizes[0]==null?"x":sizes[0]); onSize(); }
+}
+function onSize(){
+  const id=$('selSize').value;
+  state.selectedSku=id||null;
+  updateSelHint();
+  if(id){ const rd=getRound(state.date,state.round); $('qtyInput').value = rd.items[id]? rd.items[id].qty : '0'; }
+}
+function updateSelHint(){
+  const id=state.selectedSku, el=$('selHint');
+  if(!id){ el.textContent=''; return; }
+  const p=PRODUCTS[id], cur=getRound(state.date,state.round).items[id];
+  el.innerHTML = `✓ ${p.name} <span class="muted">(${p.unit})</span>` + (cur?` • <b>เคยนับ ${cur.qty}</b> เมื่อ ${cur.ts}`:'');
+}
+
+/* ================= COUNTING ================= */
+function bump(d){ const inp=$('qtyInput'); let v=parseInt(inp.value||'0',10)+d; if(isNaN(v)||v<0)v=0; inp.value=v; }
+function saveCount(){
+  const id=state.selectedSku;
+  if(!id){ toast('เลือกให้ครบ: หมวด → สินค้า → น้ำหนัก','err'); return; }
+  const qty=parseInt($('qtyInput').value||'0',10);
+  if(isNaN(qty)||qty<0){ toast('จำนวนไม่ถูกต้อง','err'); return; }
+
+  const rd=getRound(state.date,state.round);
+  const isEdit = rd.items[id]!==undefined;
+  if(!rd.time) rd.time=$('roundTime').value||nowTime();
+  rd.items[id]={ qty, ts:nowTime(), stamp:nowStamp() };
+  setRoundData(state.date,state.round,rd);
+
+  const p=PRODUCTS[id];
+  logAction(isEdit?'แก้ไขจำนวน':'บันทึกนับ', `${p.cat} / ${p.name} = ${qty} ${p.unit}`);
+  toast(`✓ ${p.name} = ${qty} ${p.unit} (${rd.items[id].ts})`,'ok');
+
+  // reset น้ำหนัก+จำนวน ไว้ (คงหมวด+สินค้า เพื่อนับน้ำหนักถัดไปเร็วขึ้น)
+  $('selSize').value=''; state.selectedSku=null; $('qtyInput').value='0'; updateSelHint();
+  renderSaved();
+}
+
+function renderSaved(){
+  const rd=getRound(state.date,state.round);
+  const n=Object.keys(rd.items).length;
+  $('savedCountPill').textContent=`${n} รายการ`;
+  const box=$('savedList');
+  if(n===0){ box.innerHTML=`<div class="empty">ยังไม่ได้นับสินค้าในรอบ <b>${state.round}</b><br>เลือกหมวด → สินค้า → น้ำหนัก เพื่อเริ่มนับ</div>`; return; }
+  box.innerHTML = buildGroupedList(rd, true);
+}
+function buildGroupedList(rd, withEdit){
+  let html='';
+  CATALOG.forEach((g,ci)=>{
+    let rows='';
+    g.products.forEach((p,pi)=>{
+      const sizes=(p.sizes&&p.sizes.length)?p.sizes:[null];
+      sizes.forEach(sz=>{
+        const id=ci+"-"+pi+"-"+(sz==null?"x":sz);
+        const v=rd.items[id];
+        if(v===undefined) return;
+        const pr=PRODUCTS[id];
+        rows+=`<div class="item">
+          <div><div class="name">${pr.product}${pr.sizeLabel?' '+pr.sizeLabel:''}</div><div class="meta">⏱ ${v.ts}</div></div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="qty">${v.qty} <span class="small muted">${pr.unit}</span></div>
+            ${withEdit?`<button onclick="editItem('${id}')" style="border:0;background:var(--green-light);color:var(--green-dark);border-radius:8px;padding:8px 10px;font-family:inherit;cursor:pointer">แก้</button>`:''}
+          </div></div>`;
+      });
+    });
+    if(rows) html+=`<div class="cat-head">${g.cat}</div>`+rows;
+  });
+  return html;
+}
+function editItem(id){
+  const p=PRODUCTS[id];
+  $('selCat').value=p.ci; onCat();
+  $('selProd').value=p.pi; onProd();
+  $('selSize').value=id; onSize();
+  $('qtyInput').value = getRound(state.date,state.round).items[id].qty;
+  switchTab('count');
+  window.scrollTo({top:0,behavior:'smooth'});
+  toast('แก้จำนวนแล้วกดบันทึกอีกครั้ง','ok');
+}
+
+/* ================= SUMMARY ================= */
+function renderSummary(){
+  const rd=getRound(state.date,state.round);
+  const counted=Object.keys(rd.items);
+  const total=ALL_IDS.length, done=counted.length, pct=total?Math.round(done/total*100):0;
+  $('sumHead').textContent=`วันที่ ${state.date} • รอบ ${state.round}`;
+  $('progBar').style.width=pct+'%';
+  $('sumDone').textContent=done; $('sumTotal').textContent=total; $('sumPct').textContent=pct+'%';
+
+  const pending=ALL_IDS.filter(s=>!counted.includes(s));
+  $('pendPill').textContent=`ยังไม่ได้นับ ${pending.length}`;
+  $('donePill').textContent=`นับแล้ว ${done}`;
+
+  $('doneList').innerHTML = done? buildGroupedList(rd,false) : `<div class="empty">ยังไม่ได้นับสินค้า</div>`;
+
+  // pending grouped (count per category to keep it short)
+  let ph='';
+  CATALOG.forEach((g,ci)=>{
+    let rows='';
+    g.products.forEach((p,pi)=>{
+      const sizes=(p.sizes&&p.sizes.length)?p.sizes:[null];
+      sizes.forEach(sz=>{
+        const id=ci+"-"+pi+"-"+(sz==null?"x":sz);
+        if(rd.items[id]!==undefined) return;
+        rows+=`<div class="item"><div class="name">${p.name}${sz!=null?' '+sz+' กก.':''}</div><span class="pill pill-pending">รอนับ</span></div>`;
+      });
+    });
+    if(rows) ph+=`<div class="cat-head">${g.cat}</div>`+rows;
+  });
+  $('pendingList').innerHTML = pending.length? ph : `<div class="empty">นับครบทุกรายการแล้ว 🎉</div>`;
+}
+
+/* ================= DIFF (เช้า–เย็น) ================= */
+function renderDiff(){
+  const date=$('diffDate').value||state.date;
+  const M=getRound(date,'เช้า').items, E=getRound(date,'เย็น').items;
+  let html=`<table><thead><tr><th style="text-align:left">สินค้า</th><th>เช้า</th><th>เย็น</th><th>ผลต่าง</th></tr></thead><tbody>`;
+  let any=false;
+  CATALOG.forEach((g,ci)=>{
+    let rows='';
+    g.products.forEach((p,pi)=>{
+      const sizes=(p.sizes&&p.sizes.length)?p.sizes:[null];
+      sizes.forEach(sz=>{
+        const id=ci+"-"+pi+"-"+(sz==null?"x":sz);
+        const mm=M[id], ee=E[id];
+        if(mm===undefined && ee===undefined) return;
+        const m=mm?mm.qty:undefined, e=ee?ee.qty:undefined, hasM=m!==undefined, hasE=e!==undefined;
+        let dcell;
+        if(hasM&&hasE){ const d=e-m; dcell=d>0?`<span class="diff-pos">+${d}</span>`:(d<0?`<span class="diff-neg">${d}</span>`:`<span class="diff-zero">0</span>`); }
+        else dcell=`<span class="muted small">—</span>`;
+        const label=p.name+(sz!=null?' '+sz+' กก.':'');
+        rows+=`<tr><td class="name">${label}</td><td>${hasM?m:'<span class="muted">-</span>'}</td><td>${hasE?e:'<span class="muted">-</span>'}</td><td>${dcell}</td></tr>`;
+      });
+    });
+    if(rows){ any=true; html+=`<tr class="cat-row"><td colspan="4">${g.cat}</td></tr>`+rows; }
+  });
+  html+=`</tbody></table>`;
+  $('diffTable').innerHTML = any? html : `<div class="empty">ยังไม่มีข้อมูลการนับของวันที่ ${date}</div>`;
+}
+
+/* ================= SEND ================= */
+function buildPayload(){
+  const rd=getRound(state.date,state.round);
+  const items=Object.keys(rd.items).map(id=>{
+    const p=PRODUCTS[id];
+    return { sku:id, category:p.cat, product:p.product, size:(p.size==null?'':p.size), name:p.name, unit:p.unit, qty:rd.items[id].qty, time:rd.items[id].ts };
+  });
+  return { branch:state.user.branch||'', employee:state.user.name, employeeCode:state.user.code,
+           date:state.date, round:state.round, roundTime: rd.time||$('roundTime').value, sentAt:nowStamp(), items };
+}
+function refreshSend(){
+  const rd=getRound(state.date,state.round), n=Object.keys(rd.items).length;
+  $('sendHead').textContent=`วันที่ ${state.date} • รอบ ${state.round} • พนักงาน ${state.user.name} (#${state.user.code})`;
+  $('sendSummary').innerHTML = n? `<div class="small">มี <b>${n}</b> รายการพร้อมส่ง (จากทั้งหมด ${ALL_IDS.length})</div>` : `<div class="empty">ยังไม่มีรายการในรอบนี้</div>`;
+  $('sendBtn').disabled = n===0;
+}
+function saveCfg(){ const url=$('cfgUrl').value.trim(); save(LS.cfg,{url}); logAction('ตั้งค่า','บันทึก URL'); toast('บันทึกการตั้งค่าแล้ว','ok'); }
+async function sendToSheet(){
+  const cfg=load(LS.cfg,{}); const url=cfg.url||DEFAULT_SHEET_URL;
+  if(!url){ toast('ยังไม่ได้ตั้งค่า URL','err'); switchTab('send'); return; }
+  const payload=buildPayload();
+  if(payload.items.length===0){ toast('ไม่มีรายการให้ส่ง','err'); return; }
+  $('sendBtn').disabled=true; $('sendStatus').textContent='กำลังส่ง...';
+  try{
+    await fetch(url,{ method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) });
+    $('sendStatus').textContent=`✓ ส่งแล้ว ${payload.items.length} รายการ เมื่อ ${nowStamp()}`;
+    logAction('ส่ง Sheet', `${payload.round} • ${payload.items.length} รายการ`);
+    toast('ส่งเข้า Google Sheet แล้ว ✓','ok');
+  }catch(err){
+    $('sendStatus').textContent='✗ ส่งไม่สำเร็จ: '+err.message;
+    toast('ส่งไม่สำเร็จ ลองดาวน์โหลด CSV สำรอง','err');
+  }finally{ $('sendBtn').disabled=false; }
+}
+function exportCSV(){
+  const payload=buildPayload();
+  if(payload.items.length===0){ toast('ไม่มีรายการให้ส่งออก','err'); return; }
+  let csv='﻿';
+  csv+='วันที่,รอบ,เวลาเริ่ม,สาขา,รหัสพนักงาน,พนักงาน,หมวด,สินค้า,น้ำหนัก(กก.),หน่วย,จำนวน,เวลาบันทึก\n';
+  payload.items.forEach(it=>{
+    csv+=[payload.date,payload.round,payload.roundTime,payload.branch,payload.employeeCode,payload.employee,
+          '"'+it.category+'"','"'+it.product+'"',it.size,it.unit,it.qty,it.time].join(',')+'\n';
+  });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`stock_${payload.date}_${payload.round}.csv`; a.click();
+  logAction('ดาวน์โหลด CSV', `${payload.round} • ${payload.items.length} รายการ`);
+  toast('ดาวน์โหลด CSV แล้ว','ok');
+}
+
+/* ================= NAV ================= */
+function switchTab(tab){
+  ['count','summary','diff','log','send'].forEach(t=>$('tab-'+t).classList.toggle('hidden', t!==tab));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  if(tab==='summary') renderSummary();
+  if(tab==='diff') renderDiff();
+  if(tab==='log') renderLog();
+  if(tab==='send') refreshSend();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ================= TOAST ================= */
+let toastT;
+function toast(msg,type){ const t=$('toast'); t.textContent=msg; t.className='show '+(type||''); clearTimeout(toastT); toastT=setTimeout(()=>t.className=t.className.replace('show','').trim(),2600); }
+
+/* ================= BOOT ================= */
+(function(){ const u=load(LS.user,null); if(u && EMPLOYEES.find(e=>e.code===u.code)){ state.user=u; startApp(); } })();
+</script>
+</body>
+</html>
