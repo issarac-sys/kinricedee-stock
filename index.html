@@ -112,11 +112,16 @@
     <label>รหัสพนักงาน</label>
     <input id="loginCode" placeholder="เช่น 1001" inputmode="numeric" autocomplete="off">
     <div style="height:12px"></div>
+    <label>รหัสผ่าน</label>
+    <input id="loginPass" type="password" placeholder="รหัสผ่าน" inputmode="numeric" autocomplete="off"
+           onkeydown="if(event.key==='Enter')doLogin()">
+    <div style="height:12px"></div>
     <label>รหัสสาขา / ร้าน</label>
-    <input id="loginBranch" placeholder="เช่น สาขาตลาดสด" autocomplete="off">
+    <input id="loginBranch" placeholder="เช่น 01" autocomplete="off"
+           onkeydown="if(event.key==='Enter')doLogin()">
     <div style="height:16px"></div>
     <button class="btn btn-primary" onclick="doLogin()">เข้าสู่ระบบ</button>
-    <p class="hint center" id="loginHint">ใส่รหัสพนักงานเพื่อเข้าสู่ระบบ</p>
+    <p class="hint center" id="loginHint">ใส่รหัสพนักงาน + รหัสผ่าน เพื่อเข้าสู่ระบบ</p>
   </div>
 </div>
 
@@ -198,12 +203,27 @@
     <!-- TAB: DIFF -->
     <section id="tab-diff" class="hidden">
       <div class="card">
-        <h2>ผลต่าง เช้า–เย็น</h2>
-        <label>เลือกวันที่</label>
-        <input type="date" id="diffDate">
-        <p class="hint">ผลต่าง = เย็น − เช้า (ติดลบ = ของออก/ลดลง) • แสดงเฉพาะรายการที่นับ</p>
+        <h2>ผลต่างระหว่างรอบ</h2>
+        <label>รอบก่อน (ฐานเทียบ)</label>
+        <input type="date" id="diffDateA">
+        <div style="height:8px"></div>
+        <div class="seg" id="diffSegA">
+          <button data-r="เช้า" onclick="setDiffRound('A','เช้า')">🌅 เช้า</button>
+          <button data-r="เย็น" onclick="setDiffRound('A','เย็น')">🌆 เย็น</button>
+        </div>
+        <div style="height:14px"></div>
+        <label>รอบหลัง (รอบที่นับล่าสุด)</label>
+        <input type="date" id="diffDateB">
+        <div style="height:8px"></div>
+        <div class="seg" id="diffSegB">
+          <button data-r="เช้า" onclick="setDiffRound('B','เช้า')">🌅 เช้า</button>
+          <button data-r="เย็น" onclick="setDiffRound('B','เย็น')">🌆 เย็น</button>
+        </div>
+        <div style="height:12px"></div>
+        <button class="btn btn-ghost" onclick="diffPrevAuto()">↺ ตั้ง “รอบก่อนหน้า” ให้อัตโนมัติ</button>
+        <p class="hint">ผลต่าง = รอบหลัง − รอบก่อน (ติดลบ = ของออก/ลดลง) • เทียบข้ามวันได้ เช่น เช้า 24 เทียบ เย็น 23</p>
       </div>
-      <div class="card"><div id="diffTable"></div></div>
+      <div class="card"><div id="diffHead" class="small muted" style="margin-bottom:8px"></div><div id="diffTable"></div></div>
     </section>
 
     <!-- TAB: LOG -->
@@ -294,13 +314,17 @@
 <script>
 /* ================= พนักงาน & สิทธิ์ =================
    role: 'staff' = นับ/แก้ไข/ดูบันทึก (ลบไม่ได้)  |  'admin' = ทำได้ทุกอย่าง
-   *** แก้รหัส/ชื่อพนักงานจริงได้ที่นี่ *** */
+   password: ถ้าใส่ไว้จะต้องกรอกรหัสผ่านให้ตรง (ถ้าเว้นว่าง = ไม่ต้องใช้รหัสผ่าน)
+   *** แก้รหัส/ชื่อ/รหัสผ่านพนักงานจริงได้ที่นี่ *** */
 const EMPLOYEES = [
-  { code:"1001", name:"พนักงาน 1", role:"staff" },
-  { code:"1002", name:"พนักงาน 2", role:"staff" },
-  { code:"1003", name:"พนักงาน 3", role:"staff" },
+  { code:"1001", name:"แต๋ม",        role:"staff", password:"0001" },
   { code:"9999", name:"ผู้ดูแลระบบ", role:"admin" },
 ];
+
+/* ================= รหัสสาขา → ชื่อสาขา ================= */
+const BRANCHES = {
+  "01": "สาขาเทียนดัด",
+};
 
 /* ================= แค็ตตาล็อกสินค้า (จากไฟล์ "ข้อมูลหลัก กินไรซ์ดี") =================
    หมวดหมู่ → ชื่อสินค้า(แบรนด์) → น้ำหนัก(กก.)  เรียงลำดับตาม Excel  */
@@ -399,7 +423,7 @@ rebuildIndex();
 const LS = { user:'kgrd_user', cfg:'kgrd_cfg', counts:'kgrd_counts', log:'kgrd_log' };
 // URL ปลายทาง Google Apps Script (เชื่อมกับชีต "นับสต็อก กินไรซ์ดี" แล้ว) — ค่าเริ่มต้น
 const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyhQFV5pl258Ozsd-9qCwR2P6aHN1JS4bNYEKod4cInOW7plV-I0NjSHVEFKK0kAd5uqA/exec';
-let state = { user:null, round:'เช้า', date:null, selectedSku:null };
+let state = { user:null, round:'เช้า', date:null, selectedSku:null, diffA:{date:null,round:'เช้า'}, diffB:{date:null,round:'เย็น'} };
 const $ = id => document.getElementById(id);
 
 function load(key, def){ try{ const v=localStorage.getItem(key); return v==null? def : (JSON.parse(v) ?? def) }catch(e){ return def } }
@@ -458,14 +482,19 @@ function clearLog(){
 
 /* ================= LOGIN ================= */
 function doLogin(){
-  const code=$('loginCode').value.trim(), branch=$('loginBranch').value.trim();
+  const code=$('loginCode').value.trim(), pass=$('loginPass').value, branchIn=$('loginBranch').value.trim();
+  const hint=$('loginHint');
   if(!code){ toast('กรุณาใส่รหัสพนักงาน','err'); return; }
   const emp = EMPLOYEES.find(e=>e.code===code);
-  if(!emp){ $('loginHint').textContent='❌ ไม่พบรหัสพนักงานนี้ในระบบ'; $('loginHint').style.color='var(--red)'; toast('รหัสพนักงานไม่ถูกต้อง','err'); return; }
-  state.user = { code:emp.code, name:emp.name, role:emp.role, branch, at: nowStamp() };
+  if(!emp){ hint.textContent='❌ ไม่พบรหัสพนักงานนี้ในระบบ'; hint.style.color='var(--red)'; toast('รหัสพนักงานไม่ถูกต้อง','err'); return; }
+  if(emp.password && pass!==emp.password){ hint.textContent='❌ รหัสผ่านไม่ถูกต้อง'; hint.style.color='var(--red)'; toast('รหัสผ่านไม่ถูกต้อง','err'); return; }
+  // resolve branch code → name (ถ้ามีในตาราง BRANCHES)
+  const branchName = BRANCHES[branchIn] ? BRANCHES[branchIn] : branchIn;
+  const branchLabel = (BRANCHES[branchIn] ? `${branchIn} - ${branchName}` : branchName);
+  state.user = { code:emp.code, name:emp.name, role:emp.role, branch:branchLabel, branchCode:branchIn, at: nowStamp() };
   save(LS.user, state.user);
   startApp();
-  logAction('เข้าสู่ระบบ', (emp.role==='admin'?'ผู้ดูแลระบบ':'พนักงาน') + (branch?` • สาขา ${branch}`:''));
+  logAction('เข้าสู่ระบบ', (emp.role==='admin'?'ผู้ดูแลระบบ':'พนักงาน') + (branchLabel?` • ${branchLabel}`:''));
   renderLog();
 }
 function logout(){
@@ -487,16 +516,21 @@ function startApp(){
 
   state.date = todayStr();
   $('countDate').value = state.date;
-  $('diffDate').value = state.date;
   $('roundTime').value = nowTime();
   if(!load(LS.cfg,{}).url) save(LS.cfg,{url:DEFAULT_SHEET_URL});  // ตั้งค่า URL อัตโนมัติครั้งแรก
   $('cfgUrl').value = (load(LS.cfg,{}).url)||DEFAULT_SHEET_URL;
+
+  // diff: ค่าเริ่มต้น = รอบหลัง (วันนี้/รอบปัจจุบัน) เทียบกับรอบก่อนหน้า
+  state.diffB = { date: state.date, round: state.round };
+  state.diffA = prevRound(state.diffB.date, state.diffB.round);
+  syncDiffUI();
 
   // build category dropdown
   rebuildCatDropdown();
 
   $('countDate').addEventListener('change', e=>{ state.date=e.target.value; syncRoundTime(); renderSaved(); updateSelHint(); });
-  $('diffDate').addEventListener('change', renderDiff);
+  $('diffDateA').addEventListener('change', renderDiff);
+  $('diffDateB').addEventListener('change', renderDiff);
 
   syncRoundTime(); renderSaved();
 }
@@ -657,10 +691,33 @@ function renderSummary(){
 }
 
 /* ================= DIFF (เช้า–เย็น) ================= */
+function addDays(date, n){ const d=new Date(date+'T00:00:00'); d.setDate(d.getDate()+n); const off=d.getTimezoneOffset(); return new Date(d.getTime()-off*60000).toISOString().slice(0,10); }
+function prevRound(date, round){
+  // รอบก่อนหน้า: เย็น→เช้า(วันเดียวกัน) | เช้า→เย็น(เมื่อวาน)
+  return round==='เย็น' ? { date, round:'เช้า' } : { date: addDays(date,-1), round:'เย็น' };
+}
+function syncDiffUI(){
+  $('diffDateA').value=state.diffA.date; $('diffDateB').value=state.diffB.date;
+  document.querySelectorAll('#diffSegA button').forEach(b=>b.classList.toggle('active', b.dataset.r===state.diffA.round));
+  document.querySelectorAll('#diffSegB button').forEach(b=>b.classList.toggle('active', b.dataset.r===state.diffB.round));
+}
+function setDiffRound(side, r){
+  if(side==='A') state.diffA.round=r; else state.diffB.round=r;
+  syncDiffUI(); renderDiff();
+}
+function diffPrevAuto(){
+  state.diffB.date=$('diffDateB').value||state.diffB.date;
+  state.diffA=prevRound(state.diffB.date, state.diffB.round);
+  syncDiffUI(); renderDiff();
+}
 function renderDiff(){
-  const date=$('diffDate').value||state.date;
-  const M=getRound(date,'เช้า').items, E=getRound(date,'เย็น').items;
-  let html=`<table><thead><tr><th style="text-align:left">สินค้า</th><th>เช้า</th><th>เย็น</th><th>ผลต่าง</th></tr></thead><tbody>`;
+  state.diffA.date=$('diffDateA').value||state.diffA.date;
+  state.diffB.date=$('diffDateB').value||state.diffB.date;
+  const A=state.diffA, B=state.diffB;
+  const M=getRound(A.date,A.round).items;  // รอบก่อน
+  const E=getRound(B.date,B.round).items;  // รอบหลัง
+  $('diffHead').innerHTML = `📊 ผลต่าง = <b>หลัง</b> (${B.round} ${B.date}) − <b>ก่อน</b> (${A.round} ${A.date})`;
+  let html=`<table><thead><tr><th style="text-align:left">สินค้า</th><th>ก่อน<br><span class="muted" style="font-weight:400">${A.round}</span></th><th>หลัง<br><span class="muted" style="font-weight:400">${B.round}</span></th><th>ผลต่าง</th></tr></thead><tbody>`;
   let any=false;
   CATALOG.forEach((g,ci)=>{
     let rows='';
@@ -681,7 +738,7 @@ function renderDiff(){
     if(rows){ any=true; html+=`<tr class="cat-row"><td colspan="4">${g.cat}</td></tr>`+rows; }
   });
   html+=`</tbody></table>`;
-  $('diffTable').innerHTML = any? html : `<div class="empty">ยังไม่มีข้อมูลการนับของวันที่ ${date}</div>`;
+  $('diffTable').innerHTML = any? html : `<div class="empty">ยังไม่มีข้อมูลการนับของ 2 รอบที่เลือก<br><span class="small">(ก่อน: ${A.round} ${A.date} • หลัง: ${B.round} ${B.date})</span></div>`;
 }
 
 /* ================= SEND ================= */
